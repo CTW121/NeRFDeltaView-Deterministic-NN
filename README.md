@@ -21,7 +21,7 @@ To launch the NeRFDeltaView Deterministic Neural Network (NN) visualization tool
 
 1. Copy the trained model (checkpoint and yml files) from [NeRF Uncertainty Deterministic NN](https://github.com/CTW121/NeRF-Uncertainty-Deterministic-NN) to the [VTK_writer](https://github.com/CTW121/NeRFDeltaView-Deterministic-NN/tree/master/VTK_writer) folder.
 
-2. Within the [VTK_writer](https://github.com/CTW121/NeRFDeltaView-Deterministic-NN/tree/master/VTK_writer) folder, execute `python vtk_writer.py` to generate the VTK 3D volumetric data files (estimated opacity, uncertainty). Then, copy these VTK 3D volumetric data files to the [data](https://github.com/CTW121/NeRFDeltaView-Deterministic-NN/tree/master/data) folder.
+2. Within the [VTK_writer](https://github.com/CTW121/NeRFDeltaView-Deterministic-NN/tree/master/VTK_writer) folder, execute `python vtk_writer.py` to generate the VTK 3D volumetric data files (estimated opacity and uncertainty). Then, copy these VTK 3D volumetric data files to the [data](https://github.com/CTW121/NeRFDeltaView-Deterministic-NN/tree/master/data) folder.
 
 3. Run `Python preprocessing_2DTF_heatmap.py` to produce CSV files containing color and density means, as well as standard deviations for heatmap visualization.
 
