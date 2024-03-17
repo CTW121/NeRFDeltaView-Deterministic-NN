@@ -847,6 +847,8 @@ def NeRFDeltaView():
 
     """
     Isosurface
+
+    Set up the rendering of an isosurface within a designated frame
     """
     frame_middle_10 = UI_helpers.frame_dict['frame_middle_10']
     interactor_isosurface = QVTKRenderWindowInteractor(frame_middle_10)
@@ -861,12 +863,16 @@ def NeRFDeltaView():
 
     """
     Outline
+
+    Generate an outline representation of the volume data for visualization purposes
     """
     outline = helpers.vtk_create_outline(opacity_reader)
 
 
     """
     Opacity (for visualizing the 3D reconstruction model)
+
+    Set up the opacity visualization for the 3D reconstruction model
     """
     # the opacity volume is identical for color uncertainty volume and density uncertainty volume
     frame_middle_01 = UI_helpers.frame_dict['frame_middle_01']
@@ -886,6 +892,8 @@ def NeRFDeltaView():
 
     """
     Uncertainty
+
+    Set up the visualization for representing uncertainty
     """
     # opacity_tf_uncertainty = helpers.vtk_create_piecewise_function([[0.00, 0.00], [0.85, 1.00]])
     opacity_tf_uncertainty = helpers.vtk_create_piecewise_function([[0.00, 0.00], [0.25, 1.00]])
@@ -897,6 +905,8 @@ def NeRFDeltaView():
 
     """
     Scalar bar (color bar)
+
+    Create scalar bars to represent the color uncertainty and density uncertainty
     """
     # scalar_bar_uncertainty, scalar_bar_uncertainty_widget = helpers.vtk_create_scalar_bar(alpha_tf_uncertainty, interactor_opacity_uncertainty, "$\delta$")
     scalar_bar_uncertainty, scalar_bar_uncertainty_widget = helpers.vtk_create_scalar_bar(alpha_tf_uncertainty, interactor_opacity_uncertainty, "Uncertainty")
@@ -911,6 +921,8 @@ def NeRFDeltaView():
 
     """
     Renderers
+
+    Renderer objects are created for different visualizations
     """
     renderer_isosurface = helpers.vtk_create_renderer(actor_opacity, title_isosurface)
     interactor_isosurface.GetRenderWindow().AddRenderer(renderer_isosurface)
@@ -921,11 +933,37 @@ def NeRFDeltaView():
 
     """
     Z-buffer (for uncertainties from iso-surface)
+
+    vtkFloatArray objects are created to store depth buffer data for different visualizations
     """
     z_buffer_data_isosurface = vtk.vtkFloatArray()
     z_buffer_data_uncertainty = vtk.vtkFloatArray()
 
     def zBuffer(obj, key):
+        """
+        Toggle Z-buffer preservation for rendering uncertainty visualizations alongside the isosurface.
+        
+        Parameters:
+        -----------
+        obj : vtk.vtkObject
+            The VTK object associated with the event.
+        key : str
+            The event key.
+
+        Return:
+        -------
+        None
+
+        Notes:
+        ------
+        This function toggles Z-buffer preservation for the isosurface and 
+        uncertainty renderers based on the global variable 'radio_button_opacity'. 
+        If 'radio_button_opacity' is True, indicating that the scene geometry is displayed, 
+        Z-buffer preservation is turned off for all renderers, and depth buffer data is retrieved and stored. 
+        If 'radio_button_opacity' is False, indicating that the scene geometry is hidden, 
+        Z-buffer preservation is turned off for all renderers. 
+        Finally, render updates are triggered for all interactor windows to reflect the changes.
+        """
         # global variable from the radio button which display or remove the scene geometry
         # the radio button is located beneath the histrogram of the scene
         global radio_button_opacity
@@ -961,6 +999,20 @@ def NeRFDeltaView():
 
     """
     camera for all render windows
+
+    Configure the camera settings for all render windows.
+
+    Parameters:
+    -----------
+    None
+
+    Notes:
+    ------
+    This section configures the camera settings for all render windows to ensure consistent viewing angles and 
+    zoom levels. The camera settings are adjusted to zoom in, dolly closer, and 
+    rotate for a better perspective. 
+    The same camera settings are applied to both the color uncertainty and 
+    density uncertainty renderers to maintain consistency across visualizations.
     """
     camera = renderer_isosurface.GetActiveCamera()
 
@@ -980,6 +1032,19 @@ def NeRFDeltaView():
 
     """
     Plane Widget
+
+    Configure a plane widget for interactive slicing.
+
+    Parameters:
+    -----------
+    None
+
+    Notes:
+    ------
+    This section sets up a plane widget for interactive slicing of the 3D visualization. 
+    The plane widget is attached to the isosurface renderer's interactor for interactive manipulation. 
+    The plane's position and orientation are updated based on user interaction, 
+    triggering a refresh of the render windows to reflect the changes in slicing.
     """
     plane = vtk.vtkPlane()
     plane.SetOrigin(mapper_opacity.GetCenter())
@@ -1007,12 +1072,37 @@ def NeRFDeltaView():
 
 
     def onTransferFunctionPointModified(obj, ev):
+        """
+        Transfer Function Point Modification Handler
+
+        Handle modification events of transfer function points.
+
+        Parameters:
+        -----------
+        obj : vtkObject
+            The object triggering the event.
+        ev : str
+            The event type.
+
+        Returns:
+        --------
+        None
+
+        Notes:
+        ------
+        This function is responsible for updating the scalar opacity properties of the visualization volumes 
+        when transfer function points are modified. It sets the scalar opacity properties of the opacity volume 
+        and the color uncertainty volume based on the modified transfer functions, 
+        then triggers a render update for the uncertainty render windows.
+        """
         volume_opacity.GetProperty().SetScalarOpacity(opacity_tf_Opacity)
         volume_uncertainty.GetProperty().SetScalarOpacity(opacity_tf_uncertainty)
         interactor_opacity_uncertainty.GetRenderWindow().Render()
 
     """
     Import rendered figure (generated by NeRF model using PyTorch)
+
+    Import and display a rendered figure generated by a NeRF model using PyTorch.
     """
     frame_middle_00 = UI_helpers.frame_dict['frame_middle_00']
     frame_middle_00_geometry = frame_middle_00.frameRect()
@@ -1031,6 +1121,15 @@ def NeRFDeltaView():
     """
     Text
     Information of the 3D volume
+
+    Display information about the 3D volume, including file properties and data statistics.
+
+    Notes:
+    ------
+    This section creates QLabel widgets to display information about the 3D volume. 
+    It includes details such as file properties (file names and iterations), 
+    data type, dimensions, number of points, and bounds. 
+    The information is formatted using HTML tags for styling and layout purposes.
     """
     label_layout = QVBoxLayout()
 
@@ -1062,6 +1161,14 @@ def NeRFDeltaView():
     """
     Button (generated by QButton)
     For generating the volume rendering image generated by PyTorch model
+
+    Create a button using QPushButton for generating the volume rendering image generated by the PyTorch model.
+
+    Notes:
+    ------
+    This section creates a QPushButton labeled "Render Image" along with a QLabel providing context. 
+    The QPushButton triggers the generation of a volume rendering image using the PyTorch model when clicked. 
+    The layout is adjusted for proper alignment using QVBoxLayout with specified margins.
     """
     button_layout = QVBoxLayout()
     button_layout.setContentsMargins(0, 30, 0, 85)
@@ -1135,6 +1242,15 @@ def NeRFDeltaView():
     Box
     For showing azimuth, elevation and the uncertainty value selected from
     color and density uncertainty heatmaps
+
+    Create a box layout for showing azimuth, elevation, and the uncertainty value selected from color and density uncertainty heatmaps.
+
+    Notes:
+    ------
+    This section defines a QVBoxLayout named heatmap_label_layout with specified margins for proper alignment. 
+    It contains a QLabel displaying text about mean and standard deviation from the heatmap, 
+    along with placeholders for elevation, azimuth, color mean, color standard deviation, density mean, 
+    and density standard deviation. These values are updated dynamically based on user interactions.
     """
     heatmap_label_layout = QVBoxLayout()
     heatmap_label_layout.setContentsMargins(0, 30, 0, 5)
@@ -1157,6 +1273,27 @@ def NeRFDeltaView():
     data_uncertainty = np.array(uncertainty_volume.GetPointData().GetScalars())
 
     def update_histogram(num_bins):
+        """
+        Update the histogram data based on the specified number of bins.
+
+        Parameters:
+        -----------
+        num_bins : int
+            Number of bins for the histogram.
+        selected_scatter_pts : bool, optional
+            Flag indicating whether selected scatter points are used.
+
+        Returns:
+        --------
+        None
+
+        Notes:
+        ------
+        This function computes normalized histograms for opacity, color, and 
+        density data using the specified number of bins. 
+        It then updates the histogram data in the transfer function for each type of data. 
+        Finally, it redraws the histograms to reflect the changes.
+        """
         # data_opacity, _ = helpers.vtk_structured_point_value_array(opacity_reader)
         hist_norm_opacity = helpers.create_histogram_array(data_opacity, num_bins=num_bins, filter=False)
 
@@ -1185,6 +1322,27 @@ def NeRFDeltaView():
     data_uncertainty = np.array(uncertainty_volume.GetPointData().GetScalars())
 
     def selectedInd(ind):
+        """
+        Update the selected points in the uncertainty volume.
+
+        Parameters:
+        -----------
+        ind : array_like
+            Indices of the selected points.
+
+        Returns:
+        --------
+        None
+
+        Notes:
+        ------
+        This function adjusts the alpha values of the uncertainty volume 
+        based on the selected indices. It sets the alpha values to 0 for unselected points.
+        Additionally, it updates the range for the histogram, creates 
+        rectangles representing the selected range on the histogram, and updates the scene 
+        visualization accordingly. If no points are selected, it resets the visualization and 
+        removes the rectangles from the histogram.
+        """
         # print("ind: ", ind)
         if len(ind) > 0:
             # data = np.array([0.0]*npoints_uncertainty_volume)
@@ -1228,6 +1386,15 @@ def NeRFDeltaView():
     TAB 1 (1-D transfer functions and 1-D scatter plot)
     """
     def tab1_1d_tf_scatter_plot(tab):
+        """
+        Create the layout for the 1D transfer function scatter plot tab.
+
+        Notes:
+        ------
+        This function creates a grid layout for the 1D transfer function scatter plot tab.
+        It creates frames for different sections of the layout, including the scatter plot area
+        and the control area. It then arranges these frames within the grid layout.
+        """
         layout_tab1 = QGridLayout(tab)
 
         UI_helpers.create_frame('frame_tab1_00', frame_style_sheet, width=500, height=500)
@@ -1306,6 +1473,16 @@ def NeRFDeltaView():
         radio_button_opacity = True
 
         def radioButton_sceneGeometry_onClickced():
+            """
+            Function to handle the click event of the radio button for scene geometry.
+
+            This function toggles the visibility of the scene geometry (isosurface) and updates the related components 
+            accordingly based on the state of the radio button.
+
+            Returns:
+            --------
+            None
+            """
             global radio_button_opacity
             if radio_button_scene_geometry.isChecked():
                 radio_button_opacity = True
@@ -1369,6 +1546,8 @@ def NeRFDeltaView():
 
         """
         Scatter plot
+
+        Generates a scatter plot based on the uncertainty data
         """
         data_uncertainty, dims_uncertainty = helpers.vtk_structured_point_value_array(uncertainty_reader)
         data_scatter_plot = np.zeros((len(data_uncertainty),2))
@@ -1381,11 +1560,13 @@ def NeRFDeltaView():
     """
     TAB 2 (mean and standard deviation)
     """
+    # Shift angles in the y-axis
     angles_shift_y = []
     for i in range(len(angles)):
         angle_y_shifted = angles[i][1] if angles[i][1]==0 or angles[i][1]==360 else 360.0-angles[i][1]
         angles_shift_y.append([angles[i][0], angle_y_shifted])
 
+    # Shift angles in both x and y axes
     angles_list = []
     for i in range(len(angles_shift_y)):
         angle_x_shifted = angles_shift_y[i][0]+180.0 if angles_shift_y[i][0]<180 else angles_shift_y[i][0]-180.0
@@ -1393,11 +1574,30 @@ def NeRFDeltaView():
         angles_list.append([angle_x_shifted, angle_y_shifted])
     angles_ = np.array(angles_list)
 
+    # Shift heatmap data
     uncertainty_means_ = helpers.shift_heatmap(uncertainty_means)
     uncertainty_standard_deviations_ = helpers.shift_heatmap(uncertainty_standard_deviations)
 
     # normalize the array for meaningful comparison between heatmaps
     def normalize_array(arr):
+        """
+        Normalize the array for meaningful comparison between heatmaps.
+
+        Parameters:
+        -----------
+        arr : numpy.ndarray
+            The input array to be normalized.
+
+        Returns:
+        --------
+        normalized_arr : numpy.ndarray
+            The normalized array.
+
+        Notes:
+        ------
+        This function computes the normalized version of the input array using
+        min-max normalization, which scales the values to range between 0 and 1.
+        """
         min_val = np.min(arr)
         max_val = np.max(arr)
         normalized_arr = (arr - min_val) / (max_val - min_val)
@@ -1416,6 +1616,24 @@ def NeRFDeltaView():
     # uncertainty_standard_deviations_ = uncertainty_standard_deviations
     
     def tab2_mean_sd(tab):
+        """
+        Populate tab 2 with frames for displaying mean and standard deviation.
+
+        Parameters:
+        -----------
+        tab : QWidget
+            The tab widget to be populated.
+
+        Returns:
+        --------
+        None
+
+        Notes:
+        ------
+        This function creates four frames within the specified tab layout to display
+        mean and standard deviation information. It also defines a helper function
+        to calculate the similarity between two vectors in terms of angle and cosine similarity.
+        """
         layout_tab2 = QGridLayout(tab)
 
         UI_helpers.create_frame('frame_tab2_00', frame_style_sheet, width=500, height=500)
@@ -1431,6 +1649,20 @@ def NeRFDeltaView():
         def similarity_vectors(vector1, vector2):
             """
             Calculate the angle in degrees between two vectors.
+
+            Parameters:
+            -----------
+            vector1 : numpy.ndarray
+                The first vector.
+            vector2 : numpy.ndarray
+                The second vector.
+
+            Returns:
+            --------
+            angle : float
+                The angle in degrees between the two vectors.
+            cos_similarity : float
+                The cosine similarity between the two vectors.
             """
             dot_product = np.dot(vector1, vector2)
             norm_vector1 = np.linalg.norm(vector1)
@@ -1446,6 +1678,25 @@ def NeRFDeltaView():
         Heatmaps
         """
         def heatmap_motion(event):
+            """
+            Update the visualization based on mouse movement over the heatmap.
+
+            Parameters:
+            -----------
+            event : matplotlib.backend_bases.MouseEvent
+                Mouse event containing information about the mouse movement.
+
+            Returns:
+            --------
+            None
+
+            Notes:
+            ------
+            This function updates the visualization based on the mouse movement over the heatmap.
+            It adjusts the camera azimuth and elevation angles to correspond to the mouse position.
+            Additionally, it updates the view orientation, preserves depth buffers, and renders the scene.
+            Finally, it displays the selected azimuth, elevation, and values from the heatmap on a QLabel.
+            """
             # global variable from the radio button which display or remove the scene geometry
             # the radio button is located beneath the histrogram of the scene
             global radio_button_opacity
@@ -1509,10 +1760,13 @@ def NeRFDeltaView():
                 pass
                 # print("Clicked outside the heatmap.")
 
+        # Masking out NaN values in the upper and lower portions of the arrays
         uncertainty_means_[0:6, :] = np.nan
         uncertainty_means_[19:, :] = np.nan
         uncertainty_standard_deviations_[0:6, :] = np.nan
         uncertainty_standard_deviations_[19:, :] = np.nan
+
+        # Creating HeatMap objects for displaying mean and standard deviation uncertainty
         heatmap_uncertainty_means = HeatMap(UI_helpers.frame_dict['frame_tab2_00'], data=uncertainty_means_, vmin=uncertainty_means_min, vmax=uncertainty_means_max, data_angles=angles_, title="Mean uncertainty in each direction", color='Reds', file_name="uncertainty_means")
         heatmap_uncertainty_standard_deviations = HeatMap(UI_helpers.frame_dict['frame_tab2_01'], data=uncertainty_standard_deviations_, vmin=uncertainty_stddev_min, vmax=uncertainty_stddev_max, data_angles=angles_, title="Standard deviation uncertainty in each direction", color='Reds', file_name="uncertainty_SD")
 
@@ -1526,6 +1780,7 @@ def NeRFDeltaView():
         heatmap_dict['heatmap_uncertainty_means'] = heatmap_uncertainty_means
         heatmap_dict['heatmap_uncertainty_standard_deviations'] = heatmap_uncertainty_standard_deviations
         
+        # Global variables to store the connection IDs for the motion_notify_event
         global cid_heatmap_uncertainty_means
         global cid_heatmap_uncertainty_standard_deviations
         # cid_heatmap_uncertainty_means = heatmap_uncertainty_means.fig.canvas.mpl_connect('button_press_event', heatmap_motion)
@@ -1533,12 +1788,33 @@ def NeRFDeltaView():
         cid_heatmap_uncertainty_means = heatmap_uncertainty_means.fig.canvas.mpl_connect('motion_notify_event', heatmap_motion)
         cid_heatmap_uncertainty_standard_deviations = heatmap_uncertainty_standard_deviations.fig.canvas.mpl_connect('motion_notify_event', heatmap_motion)
 
+        # Define global variables to keep track of heatmap clicks and coordinates
         global heatmap_click
         heatmap_click = False
         global y_pick, x_pick, azimuth_pick, elevation_pick
         y_pick, x_pick, azimuth_pick, elevation_pick = None, None, None, None
 
         def heatmap_onpick(event):
+            """
+            Function is triggered when a point on the heatmap is clicked.
+
+            Parameters:
+            -----------
+            event : matplotlib event
+                The event object containing information about the click.
+
+            Returns:
+            --------
+            None
+
+            Notes:
+            ------
+            This function updates the global variables y_pick, x_pick, azimuth_pick, and elevation_pick 
+            with the coordinates of the clicked point on the heatmap. It also toggles the heatmap_click 
+            variable to indicate whether a click has occurred. If a click is within the valid range of 
+            azimuth and elevation, it disconnects the motion event listeners and triggers the creation 
+            or removal of a rectangle on the heatmap.
+            """
             global y_pick, x_pick, azimuth_pick, elevation_pick
             y_pick, x_pick = int(event.ydata + 0.5), int(event.xdata + 0.5)
             # y_pick, x_pick = round(event.ydata + 0.5), round(event.xdata + 0.5)
@@ -1557,13 +1833,15 @@ def NeRFDeltaView():
                 if heatmap_click:
                     heatmap_uncertainty_means.fig.canvas.mpl_disconnect(cid_heatmap_uncertainty_means)
                     heatmap_uncertainty_standard_deviations.fig.canvas.mpl_disconnect(cid_heatmap_uncertainty_standard_deviations)
-                    heatmap_selection_square(x_pick, y_pick)
+                    heatmap_selection_square(x_pick, y_pick)    # Create a rectangle on the heatmap
 
                 else:
                     cid_heatmap_uncertainty_means = heatmap_uncertainty_means.fig.canvas.mpl_connect('motion_notify_event', heatmap_motion)
                     cid_heatmap_uncertainty_standard_deviations = heatmap_uncertainty_standard_deviations.fig.canvas.mpl_connect('motion_notify_event', heatmap_motion)
-                    heatmap_selection_square(x_pick, y_pick)
+                    heatmap_selection_square(x_pick, y_pick)    # Remove the rectangle on the heatmap
         
+        # Connect the 'button_press_event' to the heatmap_onpick function for each heatmap figure.
+        # When a button is pressed on any of these heatmaps, the heatmap_onpick function will be triggered.
         heatmap_uncertainty_means.fig.canvas.mpl_connect('button_press_event', heatmap_onpick)
         heatmap_uncertainty_standard_deviations.fig.canvas.mpl_connect('button_press_event', heatmap_onpick)
 
@@ -1575,6 +1853,21 @@ def NeRFDeltaView():
     Modified handler
     """
     def ModifiedHandler(obj, event):
+        """
+        Modified handler function.
+        This function is called when an object is modified, triggering a render update for relevant render windows.
+
+        Parameters:
+        -----------
+        obj : object
+            The object that triggered the modification event.
+        event : str
+            The type of modification event.
+
+        Returns:
+        --------
+        None
+        """
         interactor_isosurface.GetRenderWindow().Render()
         interactor_opacity_uncertainty.GetRenderWindow().Render()
         # interactor_dict['interactor_tf_opacity'].GetRenderWindow().Render()
@@ -1593,10 +1886,7 @@ def NeRFDeltaView():
     window.show()
 
     # Call the zBuffer function for the first time
-    zBuffer(None, None)                           # <=== !!! IMPORTANT !!!
-
-    # selected_pts = scatter_plot_dict["scatter_plot"].select_from_collection(
-    #     scatter_plot_dict["scatter_plot"].ax, scatter_plot_dict["scatter_plot"].scatter_pts)    # <=== !!! IMPORTANT !!!
+    zBuffer(None, None)
 
     props = dict(facecolor='green', edgecolor=None, alpha=0.2, fill=True, linestyle='-', 
                  capstyle=None, hatch=None, joinstyle=None, clip_box=None, clip_on=False, clip_path=None, 
@@ -1605,6 +1895,25 @@ def NeRFDeltaView():
                                      useblit=True, interactive=True, props=props)
 
     def heatmap_selection_square(x, y):
+        """
+        Function to create a selection square on heatmaps.
+
+        Parameters:
+        -----------
+        x : int
+            X-coordinate of the clicked point on the heatmap.
+        y : int
+            Y-coordinate of the clicked point on the heatmap.
+
+        Returns:
+        --------
+        None
+
+        Notes:
+        ------
+        This function triggers the creation of a selection square on each heatmap by calling their respective
+        selection_square methods. The x and y coordinates determine the position of the square on the heatmap.
+        """
         heatmap_dict['heatmap_uncertainty_means'].selection_square(x, y, heatmap_dict['heatmap_uncertainty_means'].ax)
         heatmap_dict['heatmap_uncertainty_standard_deviations'].selection_square(x, y, heatmap_dict['heatmap_uncertainty_standard_deviations'].ax)
 
