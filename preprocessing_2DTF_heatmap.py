@@ -14,6 +14,13 @@ from helpers import helpers
 def similarity_vectors(vector1, vector2):
     """
     Calculate the angle in degrees between two vectors.
+
+    Parameters:
+        vector1 (numpy.ndarray): First vector.
+        vector2 (numpy.ndarray): Second vector.
+
+    Returns:
+        tuple: Angle between the vectors in degrees, cosine similarity.
     """
     dot_product = np.dot(vector1, vector2)
     norm_vector1 = np.linalg.norm(vector1)
@@ -27,7 +34,23 @@ def similarity_vectors(vector1, vector2):
 
 
 def main():
+    """
+    Main function to visualize opacity and uncertainty volumes.
 
+    Parameters:
+    -----------
+    None
+
+    Returns:
+    --------
+    None
+
+    Notes:
+    ------
+    This function sets up the visualization environment to display opacity and uncertainty volumes
+    using VTK. It loads the opacity and uncertainty volumes from VTK files and prepares them for
+    visualization.
+    """
     colors = vtk.vtkNamedColors()
 
     dataset = "chair"            # dataset: lego / hotdog / chair
@@ -88,37 +111,41 @@ def main():
     renderer_uncertainty.AddVolume(volume_uncertainty)
     renderer_uncertainty.SetBackground(colors.GetColor3d('Black'))
 
-
+    # Initialize camera and orientation
     camera = renderer_isosurface.GetActiveCamera()
     original_orient = helpers.vtk_get_orientation(renderer_isosurface)
     print("original_orient: ", original_orient["orientation"])
 
-
+    # Define azimuth and elevation angles for rendering
     azimuth = [i for i in range(0, 360+1, 15)]    # east-west
     elevation = [i for i in range(0, 360+1, 15)]  # north-south
     azimuth_len = len(azimuth)
     elevation_len = len(elevation)
 
+    # Initialize arrays to store mean and standard deviation of z-buffer data
     means_uncertainty = np.zeros((azimuth_len, elevation_len))
     standard_deviations_uncertainty = np.zeros((azimuth_len, elevation_len))
 
+    # Initialize arrays to store z-buffer data
     z_buffer_data_isosurface = vtk.vtkFloatArray()
     z_buffer_data_uncertainty = vtk.vtkFloatArray()
 
     for i in range(azimuth_len):
         for j in range(elevation_len):
+            """
+            Iterate through azimuth and elevation angles for rendering and z-buffer calculation.
+            """
+            # Reset camera orientations
             helpers.vtk_set_orientation(renderer_isosurface, original_orient)
             helpers.vtk_set_orientation(renderer_uncertainty, original_orient)
 
+            # Set azimuth and elevation angles
             camera.Azimuth(azimuth[i]) # east-west
             camera.Elevation(elevation[j]) # north-south
 
-            # https://discourse.vtk.org/t/vtkrenderer-error/6143/2
+            # Adjust view up vector based on camera orientation
             view_up_vector = camera.GetViewUp()
             view_plane_normal = camera.GetViewPlaneNormal()
-            # print("view_up_vector: ", view_up_vector)
-            # print("view_plane_normal: ", view_plane_normal)
-            # print("angle", angle_between_vectors(view_up_vector, view_plane_normal))
 
             angle, cos_similarity = similarity_vectors(view_up_vector, view_plane_normal)
             # print("azimuth: {}  | elevation: {} | angle: {:.2f} | cosine similarity: {:.2f}".format(azimuth[i], elevation[j], angle, cos_similarity))
@@ -128,17 +155,20 @@ def main():
             else:
                 camera.SetViewUp(0.0, 1.0, 0.0)
                 
+            # Reset cameras and renderers
             renderer_isosurface.ResetCamera()
             renderer_uncertainty.SetActiveCamera(camera)
             renderer_uncertainty.ResetCamera()
 
             # === Z-buffer === #
+            # Calculate Z-buffer data
             renderer_isosurface.PreserveDepthBufferOff()
             renderer_isosurface.GetRenderWindow().Render()
 
             renderer_uncertainty.PreserveDepthBufferOff()
             renderer_uncertainty.GetRenderWindow().Render()
 
+            # Get Z-buffer data for isosurface and uncertainty renderers
             xmax_isosurface, ymax_isosurface = renderer_isosurface.GetRenderWindow().GetActualSize()
             renderer_isosurface.GetRenderWindow().GetZbufferData(0, 0, ymax_isosurface-1, xmax_isosurface-1, z_buffer_data_isosurface)
 
@@ -151,11 +181,14 @@ def main():
             # renderer_uncertainty.GetRenderWindow().Render()
             # ================ #
 
+            # Render windows
             render_window_isosurface.Render()
             render_window_uncertainty.Render()
 
+            # Calculate mean and standard deviation of z-buffer data
             mean, standard_deviation = helpers.mean_standard_deviation(azimuth_len, elevation_len, render_window_uncertainty)
 
+            # Assign values to arrays
             means_uncertainty[i][j] = mean
             standard_deviations_uncertainty[i][j] = standard_deviation
 
